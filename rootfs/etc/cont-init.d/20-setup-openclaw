@@ -11,6 +11,9 @@ persist_env_var OPENCLAW_ \
   OPENCLAW_STATE_DIR=/data/.openclaw \
   OPENCLAW_WORKSPACE_DIR=/data/workspace
 
+# Persist Telegram env vars so they're available to services
+persist_env_var TELEGRAM_
+
 # Ensure directories exist (only if variables are set)
 [ -n "$OPENCLAW_STATE_DIR" ] && mkdir -p "$OPENCLAW_STATE_DIR"
 [ -n "$OPENCLAW_WORKSPACE_DIR" ] && mkdir -p "$OPENCLAW_WORKSPACE_DIR"

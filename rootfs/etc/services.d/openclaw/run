@@ -2,12 +2,18 @@
 # OpenClaw gateway service
 source /etc/s6-overlay/lib/env-utils.sh
 source_env_prefix OPENCLAW_
+source_env_prefix TELEGRAM_
 
 echo "[openclaw] Starting openclaw gateway..."
 
 # ── Post-start: auto-configure Telegram after gateway is healthy ──
 if [ -n "$TELEGRAM_BOT_TOKEN" ]; then
   (
+    # Re-source env vars in subshell
+    source /etc/s6-overlay/lib/env-utils.sh
+    source_env_prefix OPENCLAW_
+    source_env_prefix TELEGRAM_
+
     # Wait for gateway to be reachable (up to 60s)
     for i in $(seq 1 30); do
       if su - openclaw -c "openclaw health" >/dev/null 2>&1; then
