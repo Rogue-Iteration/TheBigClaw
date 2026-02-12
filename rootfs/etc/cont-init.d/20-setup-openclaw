@@ -93,6 +93,15 @@ jq --arg token "$OPENCLAW_GATEWAY_TOKEN" '.gateway.auth.token = $token | .gatewa
 echo "[generate-config] Final config:"
 jq '.' "$CONFIG_FILE"
 
+# ── Auto-configure Telegram channel if token provided ──
+if [ -n "$TELEGRAM_BOT_TOKEN" ]; then
+  echo "[generate-config] Configuring Telegram bot (TELEGRAM_BOT_TOKEN set)"
+  # Inject token into the config file so gateway picks it up on start
+  jq --arg token "$TELEGRAM_BOT_TOKEN" \
+    '.channels.telegram.enabled = true | .channels.telegram.botToken = $token' \
+    "$CONFIG_FILE" > "${CONFIG_FILE}.tmp" && mv "${CONFIG_FILE}.tmp" "$CONFIG_FILE"
+fi
+
 persist_env_var OPENCLAW_
 
 echo "[generate-config] Done generating config"
