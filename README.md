@@ -1,164 +1,94 @@
-# OpenClaw + Gradient AI — Investment Research Assistant
+# OpenClaw + Gradient AI Research Assistant
 
-An AI-powered research assistant that monitors your stock watchlist, gathers intelligence from multiple sources, and delivers actionable alerts — all manageable through chat.
-
-Built on [OpenClaw](https://openclaw.com) with [DigitalOcean Gradient AI](https://www.digitalocean.com/products/gradient-ai) for inference and knowledge retrieval.
+A proactive investment research assistant running on a DigitalOcean Droplet, powered by [Gradient AI](https://www.digitalocean.com/products/ai-ml) models via [OpenClaw](https://openclaw.ai).
 
 ## What It Does
 
-| Feature | How It Works |
-|---------|-------------|
-| **Watchlist management** | Add/remove tickers, set custom alert rules — all via chat |
-| **Multi-source intelligence** | Gathers news, Reddit sentiment, SEC filings per ticker |
-| **AI-powered analysis** | Gradient AI scores significance and generates summaries |
-| **Knowledge Base** | Research stored in DO Spaces, indexed for RAG queries |
-| **Automated heartbeat** | Runs the gather→analyze→store→alert cycle periodically |
-| **Chat-first** | Connect via Telegram, WhatsApp, Signal, or Discord |
+- 📊 Monitors a watchlist of stock tickers ($CAKE, $HOG, $BOOM, $LUV, $WOOF)
+- 🔍 Gathers research from news, Reddit, SEC filings, and social media
+- 🧠 Stores findings in a Gradient Knowledge Base for RAG queries
+- 🚨 Proactively alerts you via Telegram when something significant happens
+- 💬 Answers questions about your watchlist using accumulated knowledge
 
 ## Architecture
 
 ```
-You ↔ Telegram/WhatsApp ↔ OpenClaw Gateway ↔ Gradient AI (inference)
-                                    ↓
-                          Research Skill (Python)
-                          ├── gather.py      → News, Reddit, SEC
-                          ├── analyze.py     → AI scoring + summaries
-                          ├── store.py       → Upload to Spaces → KB
-                          ├── alert.py       → Format notifications
-                          ├── query_kb.py    → RAG queries
-                          └── manage_watchlist.py → Watchlist CRUD
+Telegram → OpenClaw Gateway → Gradient AI (GPT OSS 120B)
+                ↓
+         exec tool → Python skills
+                ↓
+         DO Spaces + Gradient KB
 ```
 
-## Quick Start
+## Setup
 
-### Option A: Deploy to DigitalOcean App Platform
-
-**Cost**: ~$24/mo for the 2GB worker (OpenClaw requires 2GB RAM minimum) + inference costs.
-
-#### Prerequisites
-- [DigitalOcean account](https://cloud.digitalocean.com)
-- [doctl CLI](https://docs.digitalocean.com/reference/doctl/how-to/install/) installed and authenticated
-
-#### Step 1: Create Your Resources
-
-| # | What to Create | Where | What You'll Get |
-|---|---------------|-------|-----------------|
-| 1 | **API Token** | [API → Tokens](https://cloud.digitalocean.com/account/api/tokens) | `dop_v1_...` |
-| 2 | **Gradient AI Key** | [Gradient AI → API Keys](https://cloud.digitalocean.com/gen-ai/api-keys) | API key for inference |
-| 3 | **Spaces Bucket** | [Spaces → Create](https://cloud.digitalocean.com/spaces/new) | Bucket name |
-| 4 | **Spaces Keys** | [API → Spaces Keys](https://cloud.digitalocean.com/account/api/spaces) | Access Key + Secret |
-| 5 | **Knowledge Base** | [Gradient AI → Knowledge Bases](https://cloud.digitalocean.com/gen-ai/knowledge-bases) | UUID from the URL |
-
-> [!TIP]
-> Connect your Spaces bucket as a data source for the Knowledge Base — this is how the assistant stores and retrieves research.
-
-#### Step 2: Deploy
+### 1. Create a Droplet
 
 ```bash
-# Clone and deploy
-git clone https://github.com/Rogue-Iteration/openclaw-do-gradient.git
-cd openclaw-do-gradient
-doctl apps create --spec .do/app.yaml --wait
+doctl compute droplet create openclaw-research \
+  --image ubuntu-24-04-x64 \
+  --size s-1vcpu-2gb \
+  --region nyc3 \
+  --ssh-keys <your-ssh-key-id>
 ```
 
-#### Step 3: Add Your Secrets
+### 2. Create the environment file
 
-1. Go to [DigitalOcean Apps Dashboard](https://cloud.digitalocean.com/apps)
-2. Click **openclaw-research** → **Settings** → **openclaw** component → **Environment Variables**
-3. Add each secret:
-
-| Variable | What to Enter |
-|----------|---------------|
-| `GRADIENT_API_KEY` | Your Gradient AI API key |
-| `OPENCLAW_GATEWAY_TOKEN` | Any strong password (for gateway auth) |
-| `RESTIC_SPACES_ACCESS_KEY_ID` | Spaces access key (for persistence) |
-| `RESTIC_SPACES_SECRET_ACCESS_KEY` | Spaces secret key |
-| `RESTIC_PASSWORD` | Any strong password (encrypts backups) |
-| `DO_API_TOKEN` | Your API token (for KB re-indexing) |
-| `DO_SPACES_ACCESS_KEY` | Spaces access key (for research uploads) |
-| `DO_SPACES_SECRET_KEY` | Spaces secret key |
-| `GRADIENT_KB_UUID` | Your Knowledge Base UUID |
-
-4. Click **Save** — the app will redeploy with secrets.
-
-### Option B: Run Locally
+SSH into the Droplet and create `/etc/openclaw.env`:
 
 ```bash
-# Install OpenClaw
-brew install node
-npm install -g pnpm
-pnpm add -g openclaw
-
-# Clone and set up
-git clone https://github.com/Rogue-Iteration/openclaw-do-gradient.git
-cd openclaw-do-gradient
-cp .env.example .env
-# Edit .env with your credentials
-
-# Install Python deps
-pip install -r requirements.txt
-
-# Start OpenClaw with Gradient AI
-export GRADIENT_API_KEY="your-key"
-openclaw gateway --allow-unconfigured
+# Copy from .env.example and fill in your values
+scp .env.example root@<droplet-ip>:/etc/openclaw.env
+ssh root@<droplet-ip> nano /etc/openclaw.env
 ```
 
-## Gradient AI Models
-
-The assistant ships with these pre-configured models (switchable at runtime):
-
-| Model | Best For | Switch Command |
-|-------|----------|---------------|
-| **Llama 3.3 70B** (default) | General analysis, summaries | `/model gradient/llama3.3-70b-instruct` |
-| **DeepSeek R1 70B** | Complex financial reasoning | `/model gradient/deepseek-r1-distill-llama-70b` |
-| **Qwen3 32B** | Quick tasks, lighter workloads | `/model gradient/qwen3-32b` |
-| **GPT OSS 120B** | High-quality analysis | `/model gradient/openai-gpt-oss-120b` |
-
-You can switch models anytime in chat — no redeploy needed.
-
-## Chat Commands
-
-Once connected via Telegram, WhatsApp, Signal, or Discord:
-
-```
-"Add AAPL to my watchlist"
-"Remove TSLA"
-"Set price movement threshold for AAPL to 3%"
-"Show my watchlist"
-"What's the latest research on AAPL?"
-"Run a research cycle now"
-```
-
-## Environment Variables
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `GRADIENT_API_KEY` | ✅ | Gradient AI inference key |
-| `OPENCLAW_GATEWAY_TOKEN` | ✅ | Gateway authentication token |
-| `DO_API_TOKEN` | ✅ | DigitalOcean API token (KB re-indexing) |
-| `DO_SPACES_ACCESS_KEY` | ✅ | Spaces access key (research uploads) |
-| `DO_SPACES_SECRET_KEY` | ✅ | Spaces secret key |
-| `DO_SPACES_ENDPOINT` | | Spaces endpoint (default: `https://nyc3.digitaloceanspaces.com`) |
-| `DO_SPACES_BUCKET` | | Spaces bucket name (default: `openclaw-research`) |
-| `GRADIENT_KB_UUID` | ✅ | Knowledge Base UUID for RAG queries |
-| `RESTIC_PASSWORD` | | Encryption password for backups (App Platform only) |
-
-## Development
+### 3. Run setup
 
 ```bash
-# Run tests
-pip install -r requirements.txt
-pytest tests/ -v
-
-# Build Docker image locally
-docker build -t openclaw-research .
-docker run -it --env-file .env openclaw-research
+ssh root@<droplet-ip>
+git clone https://github.com/Rogue-Iteration/openclaw-do-gradient.git /home/openclaw/openclaw-do-gradient
+cd /home/openclaw/openclaw-do-gradient
+bash setup.sh
 ```
 
-## Based On
+### 4. Deploy updates
 
-This project extends the [digitalocean-labs/openclaw-appplatform](https://github.com/digitalocean-labs/openclaw-appplatform) template with a custom research assistant skill.
+After pushing changes to GitHub:
 
-## License
+```bash
+ssh openclaw@<droplet-ip>
+cd ~/openclaw-do-gradient
+bash deploy.sh
+```
 
-MIT
+## Management
+
+```bash
+# Check status
+systemctl status openclaw
+
+# View logs
+journalctl -u openclaw -f
+
+# Restart
+sudo systemctl restart openclaw
+```
+
+## Running Tests
+
+```bash
+cd tests
+python3 -m pytest -v
+```
+
+## Project Structure
+
+```
+├── skills/gradient-research-assistant/   # Skill tools (Python scripts)
+├── data/workspace/                       # Persona files (IDENTITY, AGENTS, HEARTBEAT)
+├── tests/                                # Unit tests (121 tests)
+├── setup.sh                              # One-time Droplet provisioning
+├── deploy.sh                             # Git-pull update script
+├── .env.example                          # Environment variable template
+└── requirements.txt                      # Python dependencies
+```
