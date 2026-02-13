@@ -114,6 +114,22 @@ else
   echo "[generate-config] TELEGRAM_BOT_TOKEN not set, skipping Telegram config"
 fi
 
+# ── Inject custom workspace files (persona, instructions) ──
+# OpenClaw reads IDENTITY.md/AGENTS.md from ~/.openclaw/workspace/ (state dir).
+# The gateway scaffolds defaults on first boot, so we overwrite them with our custom files.
+OPENCLAW_WS="$OPENCLAW_STATE_DIR/workspace"
+CUSTOM_WS="/data/workspace"
+if [ -d "$CUSTOM_WS" ]; then
+  mkdir -p "$OPENCLAW_WS"
+  for f in IDENTITY.md AGENTS.md HEARTBEAT.md; do
+    if [ -f "$CUSTOM_WS/$f" ]; then
+      cp "$CUSTOM_WS/$f" "$OPENCLAW_WS/$f"
+      chown openclaw:openclaw "$OPENCLAW_WS/$f"
+      echo "[generate-config] Injected custom $f into workspace"
+    fi
+  done
+fi
+
 echo "[generate-config] Final config:"
 jq '.' "$CONFIG_FILE"
 
