@@ -92,6 +92,10 @@ fi
 echo "[generate-config] Adding gateway.auth.token to config"
 jq --arg token "$OPENCLAW_GATEWAY_TOKEN" '.gateway.auth.token = $token | .gateway.auth.mode = "token"' "$CONFIG_FILE" > "${CONFIG_FILE}.tmp" && mv "${CONFIG_FILE}.tmp" "$CONFIG_FILE"
 
+# Enable exec tool with allowlist security (allow commands in exec-approvals.json)
+echo "[generate-config] Setting tools.exec.security = allowlist"
+jq '.tools.exec.security = "allowlist"' "$CONFIG_FILE" > "${CONFIG_FILE}.tmp" && mv "${CONFIG_FILE}.tmp" "$CONFIG_FILE"
+
 # Permissions applied via /etc/digitalocean/permissions.yaml
 
 # ── Telegram channel auto-configuration ──
