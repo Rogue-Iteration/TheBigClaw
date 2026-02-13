@@ -168,6 +168,13 @@ JSON
   # ── Fix variable interpolation in apiKey (openclaw reads \${} from env) ──
   # The JSON above has a literal \${GRADIENT_API_KEY} which openclaw expands at runtime.
 
+  # ── Generate gateway auth token ──
+  GW_TOKEN=\$(head -c 32 /dev/urandom | base64 | tr -d '=/+' | head -c 32)
+  jq --arg t "\$GW_TOKEN" '.gateway.auth.token = \$t | .gateway.auth.mode = "token"' \
+    "\$STATE_DIR/openclaw.json" > "\$STATE_DIR/openclaw.json.tmp" \
+    && mv "\$STATE_DIR/openclaw.json.tmp" "\$STATE_DIR/openclaw.json"
+  echo "  ✓ Gateway token generated"
+
   # ── Telegram config ──
   if [ -n "${TELEGRAM_BOT_TOKEN:-}" ]; then
     jq --arg token "$TELEGRAM_BOT_TOKEN" \
