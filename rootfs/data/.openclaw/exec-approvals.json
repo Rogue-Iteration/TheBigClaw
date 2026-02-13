@@ -1,0 +1,37 @@
+{
+    "version": 1,
+    "allowlist": [
+        {
+            "agent": "*",
+            "pattern": "python3"
+        },
+        {
+            "agent": "*",
+            "pattern": "/usr/bin/python3"
+        },
+        {
+            "agent": "*",
+            "pattern": "/data/workspace/skills/**/*.py"
+        },
+        {
+            "agent": "*",
+            "pattern": "cat"
+        },
+        {
+            "agent": "*",
+            "pattern": "ls"
+        },
+        {
+            "agent": "*",
+            "pattern": "head"
+        },
+        {
+            "agent": "*",
+            "pattern": "tail"
+        },
+        {
+            "agent": "*",
+            "pattern": "pip3"
+        }
+    ]
+}
