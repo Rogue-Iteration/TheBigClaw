@@ -83,7 +83,7 @@ def upload_to_spaces(
     Returns:
         dict with 'success', 'key', 'bucket', and 'message'
     """
-    bucket = bucket or os.environ.get("DO_SPACES_BUCKET", "openclaw-research")
+    bucket = bucket or os.environ.get("DO_SPACES_BUCKET", "openclawresearch")
 
     try:
         if client is None:
@@ -149,7 +149,7 @@ def trigger_kb_reindex(
         list_url = f"{DO_API_BASE}/v2/gen-ai/knowledge_bases/{kb_uuid}/data_sources"
         resp = requests.get(list_url, headers=headers, timeout=15)
         resp.raise_for_status()
-        data_sources = resp.json().get("data_sources", [])
+        data_sources = resp.json().get("knowledge_base_data_sources", [])
 
         if not data_sources:
             return {"success": False, "message": "No data sources configured for this Knowledge Base."}
