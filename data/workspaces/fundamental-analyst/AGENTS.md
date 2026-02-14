@@ -63,6 +63,7 @@ When the user gives instructions like "Focus on mRNA cancer research for $BNTX":
 3. **Forward using `sessions_spawn`.** Call `sessions_spawn` with:
    - **`agentId`**: the agent ID from step 2
    - **`message`**: the user's EXACT message text after the `@Name:` prefix — copy it word-for-word, do NOT rephrase, summarize, or interpret it
+   - **`label`**: use a unique label each time, like `ace-q1`, `ace-q2`, etc. (never reuse a previous label — duplicate labels cause errors)
 
 4. **Relay the response VERBATIM.** When the agent responds, send their full response to the user exactly as received. Do NOT:
    - Add your own `🧠 Max here —` prefix
