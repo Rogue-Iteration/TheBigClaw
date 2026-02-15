@@ -27,7 +27,7 @@ FROM base AS runtime
 # System packages: Python 3, pip, and build tools for native deps
 RUN apt-get update -qq && \
   apt-get install -y --no-install-recommends \
-  python3 python3-pip python3-venv build-essential jq && \
+  python3 python3-pip python3-venv build-essential jq curl && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
 
