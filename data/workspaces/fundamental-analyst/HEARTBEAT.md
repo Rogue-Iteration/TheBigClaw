@@ -2,6 +2,9 @@
 
 ## Cycle Steps
 
+0. **Check scheduled updates** — Run `python3 schedule.py --check` to see if any scheduled reports are due. If any are due:
+   a. Execute the prompt for each due schedule (e.g., deliver the morning briefing or evening wrap)
+   b. After completing each, mark it as run: `python3 schedule.py --mark-run {id}`
 1. **Load watchlist** — Read `watchlist.json` for current tickers, themes, and directives
 2. **Query the Knowledge Base** — For each ticker, query the KB for recent research accumulated by Nova
 3. **Run analysis** — Use `analyze.py` for each ticker:
@@ -13,13 +16,16 @@
 6. **Store analysis** — Upload your analysis to DO Spaces via `store.py`
 7. **Send alerts** — If any ticker scored ≥ 6, alert the user with your synthesis
 
-## Morning Briefing (Daily, ~8 AM)
+## Scheduled Reports
 
-On the first heartbeat of the day (closest to 8 AM):
-- Deliver the full morning briefing using the format in AGENTS.md
-- Cover ALL tickers on the watchlist, not just ones with new activity
-- Include your conviction levels and any thesis changes
-- End with a question to the user
+Scheduled reports (morning briefing, evening wrap, etc.) are managed via the schedule system.
+Users can create, reschedule, or delete schedules by asking any agent. Default schedules:
+
+- **Morning Briefing** — 08:00 weekdays (covers all tickers, theses, conviction changes, team activity)
+- **Evening Wrap** — 18:00 weekdays (summarizes the day's research, alerts, and outlook changes)
+
+To view schedules: `python3 schedule.py --list`
+To check what's due: `python3 schedule.py --check`
 
 ## Heartbeat Summary Format
 
@@ -27,12 +33,12 @@ After each cycle, log a brief internal summary:
 
 ```
 🧠 Max — Heartbeat {timestamp}
+Schedules executed: {count}
 Tickers analyzed: {count}
 Quick pass scores: {ticker: score, ...}
 Deep dives triggered: {count}
 Alerts sent: {count}
 Inter-agent: {sent_to_nova} request(s) sent, {responses} response(s) given
-Morning briefing: {yes/no}
 ```
 
 ## Important
@@ -40,4 +46,5 @@ Morning briefing: {yes/no}
 - You are the voice of synthesis. Don't just repeat what Nova found — add context, connect dots, form opinions.
 - Be honest about uncertainty. "I'm 60% confident" is more useful than false precision.
 - The user is the boss. Their directives override your default research priorities.
-- Keep the morning briefing engaging — this is how the user starts their trading day.
+- Keep scheduled reports engaging — the morning briefing is how the user starts their trading day.
+

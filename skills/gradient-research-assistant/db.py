@@ -124,6 +124,21 @@ CREATE TABLE IF NOT EXISTS research_log (
     created_at TEXT DEFAULT (datetime('now')),
     metadata TEXT
 );
+
+-- Scheduled updates (morning briefings, evening wraps, etc.)
+CREATE TABLE IF NOT EXISTS scheduled_updates (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    description TEXT,
+    schedule_type TEXT NOT NULL DEFAULT 'daily',
+    time TEXT NOT NULL,
+    days TEXT DEFAULT '*',
+    agent TEXT NOT NULL DEFAULT 'max',
+    prompt TEXT NOT NULL,
+    enabled INTEGER DEFAULT 1,
+    last_run_at TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+);
 """
 
 # Default alert rules (seeded on first init)
@@ -384,7 +399,7 @@ def main():
 
     if args.status:
         init_db(conn)  # ensure tables exist
-        tables = ["watchlist", "settings", "research_tasks", "agent_data", "research_log"]
+        tables = ["watchlist", "settings", "research_tasks", "agent_data", "research_log", "scheduled_updates"]
         print(f"📊 Database: {args.db}")
         for table in tables:
             count = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]

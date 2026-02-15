@@ -225,6 +225,17 @@ echo "💾 Initializing research database..."
 python3 "$APP_DIR/skills/gradient-research-assistant/db.py" --init --db "$STATE_DIR/research.db"
 echo "  ✓ Database ready"
 
-# ── 4. Hand off to CMD ───────────────────────────────────────────
+# ── 4. Always: sync timezone and seed default schedules ──────────
+if [ -n "${USER_TIMEZONE:-}" ]; then
+  python3 "$APP_DIR/skills/gradient-research-assistant/schedule.py" \
+    --set-timezone "$USER_TIMEZONE" --db "$STATE_DIR/research.db"
+  echo "  ✓ Timezone: $USER_TIMEZONE"
+fi
+
+python3 "$APP_DIR/skills/gradient-research-assistant/schedule.py" \
+  --seed-defaults --db "$STATE_DIR/research.db"
+echo "  ✓ Schedules ready"
+
+# ── 5. Hand off to CMD ───────────────────────────────────────────
 echo "🚀 Starting OpenClaw..."
 exec "$@"

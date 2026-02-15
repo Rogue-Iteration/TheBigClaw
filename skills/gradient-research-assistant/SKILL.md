@@ -164,6 +164,36 @@ python3 tasks.py --delete {{task_id}}
 Valid statuses: `pending`, `in_progress`, `completed`, `failed`.
 Valid agents: `max`, `nova`, `luna`, `ace`.
 
+### manage_schedules
+Create, list, update, and delete scheduled reports (morning briefings, evening wraps, etc.).
+
+```bash
+# List all schedules
+python3 schedule.py --list
+
+# Add a new schedule
+python3 schedule.py --add --name "Weekly Digest" --time 10:00 --days 0 --agent max --prompt "Deliver a weekly digest of all research"
+
+# Reschedule
+python3 schedule.py --update 1 --time 09:00
+
+# Pause / resume
+python3 schedule.py --update 1 --enabled false
+python3 schedule.py --update 1 --enabled true
+
+# Delete
+python3 schedule.py --delete 2
+
+# Change the user's timezone
+python3 schedule.py --set-timezone "US/Eastern"
+
+# Show current timezone
+python3 schedule.py --show-timezone
+```
+
+Days format (internal): `*` (daily), `1-5` (weekdays), `0,6` (weekends), `0` (Sunday only).
+Valid agents: `max`, `nova`, `luna`, `ace`.
+
 ### run_research_cycle
 Full heartbeat cycle for one ticker: gather → store → index → analyze → alert if needed.
 

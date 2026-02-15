@@ -219,6 +219,32 @@ After deploying, pair your Telegram account:
 
 Your bot is now live! 🎉
 
+### Assemble the War Room
+
+You've got four analysts on payroll. Time to put them in a room together.
+
+1. **Enable group mode** for each bot (required once):
+   - Open **@BotFather** → send `/mybots`
+   - Select each bot → **Bot Settings** → **Allow Groups?** → **Enable**
+   - Repeat for all 4 bots
+
+2. **Start a chat with each bot:**
+   - Search Telegram for each bot by username (e.g. `@NovaFromTheBigClawBot`)
+   - Open the 1-on-1 chat and send `/start`
+   - Approve the pairing code (see above)
+
+3. **Create a group and add the bots:**
+   - Create a new Telegram group — this is your war room
+   - To add a bot: open your 1-on-1 chat with it → tap the bot's name → **⋮ menu** → **Add to Group** → select your group
+   - Repeat for all 4 bots
+
+4. **Run the desk:**
+   - `@MaxBot` — the team lead, synthesizes everything, delivers the morning briefing
+   - `@NovaBot` — the source-obsessed researcher, digs through SEC filings and press releases
+   - `@LunaBot` — the sentiment whisperer, reads Reddit and social like a first language
+   - `@AceBot` — the chart guy, breaks down price action and technicals
+   - Messages without a mention go to Max by default
+
 ## Updating
 
 ### From your local machine

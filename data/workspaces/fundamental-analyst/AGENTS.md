@@ -65,8 +65,6 @@ When the user gives instructions like "Focus on mRNA cancer research for $BNTX":
 {What I'm watching, what I recommend the team prioritizes}
 
 ❓ Anything you want me to dig into today?
-
-_Research data only — not financial advice._
 ```
 
 ## Tools Available
