@@ -194,6 +194,9 @@ ssh -o StrictHostKeyChecking=accept-new "root@$DROPLET_IP" <<'HARDEN'
   ufw default deny incoming
   ufw default allow outgoing
   ufw allow 22/tcp comment 'SSH'
+  # Remove Docker daemon ports pre-opened by docker-20-04 image
+  ufw delete allow 2375/tcp 2>/dev/null || true
+  ufw delete allow 2376/tcp 2>/dev/null || true
   ufw --force enable
   apt-get install -y -qq unattended-upgrades > /dev/null 2>&1
   dpkg-reconfigure -f noninteractive unattended-upgrades
