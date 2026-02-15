@@ -158,8 +158,17 @@ JSON
       BINDINGS_JSON=$(echo "$BINDINGS_JSON" | jq '. + [{"match": {"channel": "telegram", "accountId": "ace"}, "agentId": "technical-analyst"}]')
     fi
 
-    jq --argjson accounts "$ACCOUNTS_JSON" --argjson bindings "$BINDINGS_JSON" \
-      '.channels.telegram.enabled = true | .channels.telegram.groupPolicy = "open" | .channels.telegram.dmPolicy = "open" | .channels.telegram.accounts = $accounts | .bindings = $bindings' \
+    # Build allowFrom list: use TELEGRAM_ALLOWED_IDS if set, otherwise open to all
+    if [ -n "${TELEGRAM_ALLOWED_IDS:-}" ]; then
+      # Convert comma-separated IDs to JSON array: "123,456" → ["123","456"]
+      ALLOW_FROM=$(echo "$TELEGRAM_ALLOWED_IDS" | tr ',' '\n' | jq -R . | jq -s .)
+    else
+      echo "  ⚠️  TELEGRAM_ALLOWED_IDS not set — bots are open to ALL users"
+      ALLOW_FROM='["*"]'
+    fi
+
+    jq --argjson accounts "$ACCOUNTS_JSON" --argjson bindings "$BINDINGS_JSON" --argjson allow "$ALLOW_FROM" \
+      '.channels.telegram.enabled = true | .channels.telegram.groupPolicy = "open" | .channels.telegram.dmPolicy = "open" | .channels.telegram.allowFrom = $allow | .channels.telegram.accounts = $accounts | .bindings = $bindings' \
       "$STATE_DIR/openclaw.json" > "$STATE_DIR/openclaw.json.tmp" \
       && mv "$STATE_DIR/openclaw.json.tmp" "$STATE_DIR/openclaw.json"
   fi
