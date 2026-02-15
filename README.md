@@ -196,11 +196,14 @@ Only needed if deploying via `install.sh`. Skip if running Docker locally.
 # Validate your config
 bash install.sh --dry-run
 
-# Deploy to DigitalOcean
+# Deploy to DigitalOcean (interactive — prompts for region + SSH key)
 bash install.sh
+
+# Or deploy non-interactively (e.g., from CI or scripts):
+DROPLET_REGION=nyc3 DROPLET_SSH_KEY_IDS=12345,67890 bash install.sh
 ```
 
-The script will create a Droplet, deploy the bot, and print connection details.
+The script will create a Droplet, configure the firewall, deploy the bot, and print connection details.
 
 ### Pair Your Telegram
 
@@ -292,7 +295,7 @@ docker compose down
 ### Running Tests
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 python3 -m pytest tests/ -v
 ```
 

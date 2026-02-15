@@ -8,9 +8,12 @@
 #   2. doctl is installed (https://docs.digitalocean.com/reference/doctl/how-to/install/)
 #
 # Usage:
-#   bash install.sh              # create Droplet and deploy
+#   bash install.sh              # create Droplet and deploy (interactive)
 #   bash install.sh --dry-run    # validate .env without creating resources
 #   bash install.sh --update     # update an existing Droplet
+#
+# For non-interactive use, set these env vars to skip prompts:
+#   DROPLET_REGION=nyc3 DROPLET_SSH_KEY_IDS=12345,67890 bash install.sh
 #
 # ═══════════════════════════════════════════════════════════════════
 set -euo pipefail
@@ -147,12 +150,17 @@ if [ -n "$EXISTING_IP" ]; then
   fail "Droplet already exists."
 fi
 
-# Pick region
-echo "  Available regions: nyc1 nyc3 sfo3 ams3 lon1 fra1 sgp1 blr1 tor1"
-read -rp "  Region [nyc3]: " REGION
-REGION="${REGION:-nyc3}"
+# Pick region (env var or interactive)
+if [ -n "${DROPLET_REGION:-}" ]; then
+  REGION="$DROPLET_REGION"
+  ok "Region: $REGION (from DROPLET_REGION)"
+else
+  echo "  Available regions: nyc1 nyc3 sfo3 ams3 lon1 fra1 sgp1 blr1 tor1"
+  read -rp "  Region [nyc3]: " REGION
+  REGION="${REGION:-nyc3}"
+fi
 
-# SSH key
+# SSH key (env var or interactive)
 SSH_KEYS=$(doctl compute ssh-key list --format ID,Name --no-header)
 if [ -z "$SSH_KEYS" ]; then
   echo "  No SSH keys found in your DO account."
@@ -160,9 +168,14 @@ if [ -z "$SSH_KEYS" ]; then
   fail "Add an SSH key to DigitalOcean and try again."
 fi
 
-echo "  Your SSH keys:"
-echo "$SSH_KEYS" | while IFS= read -r line; do echo "    $line"; done
-read -rp "  SSH key ID to use: " SSH_KEY_ID
+if [ -n "${DROPLET_SSH_KEY_IDS:-}" ]; then
+  SSH_KEY_ID="$DROPLET_SSH_KEY_IDS"
+  ok "SSH keys: $SSH_KEY_ID (from DROPLET_SSH_KEY_IDS)"
+else
+  echo "  Your SSH keys:"
+  echo "$SSH_KEYS" | while IFS= read -r line; do echo "    $line"; done
+  read -rp "  SSH key ID(s) to use (comma-separated): " SSH_KEY_ID
+fi
 
 info "Creating $DROPLET_NAME ($DROPLET_SIZE in $REGION)..."
 doctl compute droplet create "$DROPLET_NAME" \
