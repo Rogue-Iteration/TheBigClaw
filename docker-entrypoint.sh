@@ -176,11 +176,13 @@ JSON
       && mv "$STATE_DIR/openclaw.json.tmp" "$STATE_DIR/openclaw.json"
   fi
 
-  # Configure exec approvals
+  # Configure exec approvals — allow only specific skill scripts, not arbitrary commands
   for pattern in \
-    "python3" "/usr/bin/python3" "python3 *" \
-    "cat" "python" "/usr/bin/python" "python *" \
-    "ls" "head" "tail" "pip3" "sqlite3" "sqlite3 *"; do
+    "python3 /app/skills/gradient-research-assistant/scripts/*.py *" \
+    "python3 /app/skills/gradient-inference/scripts/*.py *" \
+    "python3 /app/skills/gradient-knowledge-base/scripts/*.py *" \
+    "python3 /app/skills/gradient-data-gathering/scripts/*.py *" \
+    "cat" "ls" "head" "tail" "sqlite3" "sqlite3 *"; do
     openclaw approvals allowlist add --target local --agent '*' --pattern "$pattern" 2>/dev/null || true
   done
 

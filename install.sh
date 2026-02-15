@@ -115,15 +115,15 @@ if $UPDATE_ONLY; then
 
   echo ""
   echo "[5/6] Deploying update..."
-  scp -o StrictHostKeyChecking=no "$ENV_FILE" "root@$DROPLET_IP:$REMOTE_DIR/.env"
-  ssh -o StrictHostKeyChecking=no "root@$DROPLET_IP" \
-    "cd $REMOTE_DIR && git pull origin main && docker compose up -d --build"
+  scp -o StrictHostKeyChecking=accept-new "$ENV_FILE" "root@$DROPLET_IP:$REMOTE_DIR/.env"
+  ssh -o StrictHostKeyChecking=accept-new "root@$DROPLET_IP" \
+    "chmod 600 $REMOTE_DIR/.env && cd $REMOTE_DIR && git pull origin main && docker compose up -d --build"
   ok "Update deployed"
 
   echo ""
   echo "[6/6] Verifying..."
   sleep 5
-  if ssh -o StrictHostKeyChecking=no "root@$DROPLET_IP" "docker ps --filter name=openclaw-research --format '{{.Status}}'" | grep -q "Up"; then
+  if ssh -o StrictHostKeyChecking=accept-new "root@$DROPLET_IP" "docker ps --filter name=openclaw-research --format '{{.Status}}'" | grep -q "Up"; then
     echo ""
     echo "╔════════════════════════════════════════════════════════════╗"
     echo "║  ✅ Update deployed successfully!                        ║"
@@ -177,36 +177,49 @@ ok "Droplet created at $DROPLET_IP"
 
 # ── 5. Wait for SSH and deploy ──────────────────────────────────
 echo ""
-echo "[5/6] Deploying to Droplet..."
+echo "[5/7] Deploying to Droplet..."
 
 info "Waiting for SSH to become available..."
 for i in $(seq 1 30); do
-  if ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 "root@$DROPLET_IP" true 2>/dev/null; then
+  if ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=5 "root@$DROPLET_IP" true 2>/dev/null; then
     break
   fi
   sleep 5
 done
 ok "SSH connected"
 
+# Harden the Droplet: firewall + auto-updates
+info "Configuring firewall and automatic security updates..."
+ssh -o StrictHostKeyChecking=accept-new "root@$DROPLET_IP" <<'HARDEN'
+  ufw default deny incoming
+  ufw default allow outgoing
+  ufw allow 22/tcp comment 'SSH'
+  ufw --force enable
+  apt-get install -y -qq unattended-upgrades > /dev/null 2>&1
+  dpkg-reconfigure -f noninteractive unattended-upgrades
+HARDEN
+ok "Firewall active (SSH only) + auto-updates enabled"
+
 # Clone repo, copy .env, start containers
 info "Cloning repository..."
-ssh -o StrictHostKeyChecking=no "root@$DROPLET_IP" \
+ssh -o StrictHostKeyChecking=accept-new "root@$DROPLET_IP" \
   "git clone $REPO_URL $REMOTE_DIR 2>/dev/null || (cd $REMOTE_DIR && git pull origin main)"
 
 info "Uploading .env..."
-scp -o StrictHostKeyChecking=no "$ENV_FILE" "root@$DROPLET_IP:$REMOTE_DIR/.env"
+scp -o StrictHostKeyChecking=accept-new "$ENV_FILE" "root@$DROPLET_IP:$REMOTE_DIR/.env"
+ssh -o StrictHostKeyChecking=accept-new "root@$DROPLET_IP" "chmod 600 $REMOTE_DIR/.env"
 
 info "Starting Docker containers..."
-ssh -o StrictHostKeyChecking=no "root@$DROPLET_IP" \
+ssh -o StrictHostKeyChecking=accept-new "root@$DROPLET_IP" \
   "cd $REMOTE_DIR && docker compose up -d --build"
 ok "Containers started"
 
 # ── 6. Verify ───────────────────────────────────────────────────
 echo ""
-echo "[6/6] Verifying..."
+echo "[7/7] Verifying..."
 sleep 10
 
-if ssh -o StrictHostKeyChecking=no "root@$DROPLET_IP" "docker ps --filter name=openclaw-research --format '{{.Status}}'" | grep -q "Up"; then
+if ssh -o StrictHostKeyChecking=accept-new "root@$DROPLET_IP" "docker ps --filter name=openclaw-research --format '{{.Status}}'" | grep -q "Up"; then
   echo ""
   echo "╔════════════════════════════════════════════════════════════╗"
   echo "║  ✅ OpenClaw is running!                                  ║"

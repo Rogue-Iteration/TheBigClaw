@@ -1,12 +1,6 @@
-# Core dependencies
-requests>=2.31.0
-beautifulsoup4>=4.12.0
-feedparser>=6.0.0
-boto3>=1.34.0
-yfinance>=0.2.36
-
-# Testing
-pytest>=8.0.0
-pytest-cov>=4.1.0
-responses>=0.25.0
-moto[s3]>=5.0.0
+# Core dependencies (pinned for reproducible builds)
+requests==2.32.3
+beautifulsoup4==4.12.3
+feedparser==6.0.11
+boto3==1.36.4
+yfinance==0.2.48
