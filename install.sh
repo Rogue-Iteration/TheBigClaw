@@ -203,10 +203,18 @@ sleep 3  # let sshd fully stabilize
 ok "SSH connected"
 
 # Harden the Droplet: firewall + auto-updates
-info "Configuring firewall and automatic security updates..."
+info "Configuring firewall..."
 ssh -o StrictHostKeyChecking=accept-new "root@$DROPLET_IP" \
-  'ufw default deny incoming && ufw default allow outgoing && ufw allow 22/tcp comment "SSH" && ufw delete allow 2375/tcp 2>/dev/null; ufw delete allow 2376/tcp 2>/dev/null; ufw --force enable && apt-get install -y -qq unattended-upgrades > /dev/null 2>&1 && dpkg-reconfigure -f noninteractive unattended-upgrades'
-ok "Firewall active (SSH only) + auto-updates enabled"
+  'ufw default deny incoming && ufw default allow outgoing && ufw allow 22/tcp comment "SSH" && ufw delete allow 2375/tcp 2>/dev/null; ufw delete allow 2376/tcp 2>/dev/null; ufw --force enable'
+ok "Firewall active (SSH only)"
+
+info "Installing automatic security updates..."
+if ssh -o StrictHostKeyChecking=accept-new "root@$DROPLET_IP" \
+  'apt-get install -y -qq unattended-upgrades > /dev/null 2>&1 && dpkg-reconfigure -f noninteractive unattended-upgrades' 2>/dev/null; then
+  ok "Unattended-upgrades enabled"
+else
+  echo "  ⚠ Unattended-upgrades skipped (apt may be locked by cloud-init). Install manually later."
+fi
 
 # Clone repo, copy .env, start containers
 info "Cloning repository..."
