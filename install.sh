@@ -110,7 +110,7 @@ if $UPDATE_ONLY; then
   echo ""
   echo "[4/6] Updating existing Droplet..."
 
-  DROPLET_IP=$(doctl compute droplet list --format Name,PublicIPv4 --no-header | grep "^$DROPLET_NAME" | awk '{print $2}')
+  DROPLET_IP=$(doctl compute droplet list --format Name,PublicIPv4 --no-header | grep "^$DROPLET_NAME" | awk '{print $2}' || true)
   if [ -z "$DROPLET_IP" ]; then
     fail "Droplet '$DROPLET_NAME' not found. Run without --update to create it."
   fi
@@ -143,7 +143,7 @@ echo ""
 echo "[4/6] Creating Droplet..."
 
 # Check if Droplet already exists
-EXISTING_IP=$(doctl compute droplet list --format Name,PublicIPv4 --no-header | grep "^$DROPLET_NAME" | awk '{print $2}')
+EXISTING_IP=$(doctl compute droplet list --format Name,PublicIPv4 --no-header | grep "^$DROPLET_NAME" | awk '{print $2}' || true)
 if [ -n "$EXISTING_IP" ]; then
   echo "  Droplet '$DROPLET_NAME' already exists at $EXISTING_IP"
   echo "  Use --update to deploy changes, or delete and re-run."
