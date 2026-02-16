@@ -43,7 +43,7 @@ if [ ! -f "$STATE_DIR/openclaw.json" ]; then
           {
             "id": "openai-gpt-oss-120b",
             "name": "OpenAI GPT OSS 120B",
-            "reasoning": false,
+            "reasoning": true,
             "input": ["text"],
             "contextWindow": 128000,
             "maxTokens": 8192
