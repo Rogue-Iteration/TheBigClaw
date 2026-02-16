@@ -43,10 +43,11 @@ python3 /app/skills/gradient-data-gathering/scripts/gather_technicals.py --ticke
 
 **Requires**: `yfinance` package (installed via `requirements.txt` in the Docker image).
 
-### Shared Tools (from gradient-research-assistant)
+### Shared Tools
 
-- `store.py` — Upload research to DO Spaces and trigger KB indexing
-- `query_kb.py` — Query the knowledge base for historical context
+- `gradient_spaces.py` — Upload research to DO Spaces: `python3 /app/skills/gradient-knowledge-base/scripts/gradient_spaces.py --upload FILE --key KEY --json`
+- `gradient_kb_manage.py` — Trigger KB re-indexing: `python3 /app/skills/gradient-knowledge-base/scripts/gradient_kb_manage.py --reindex --json`
+- `gradient_kb_query.py` — Query the KB for historical context: `python3 /app/skills/gradient-knowledge-base/scripts/gradient_kb_query.py --query "..." --rag --json`
 - `manage_watchlist.py` — Read the watchlist
 - `alert.py` — Format and send alerts
 
@@ -59,7 +60,9 @@ Your heartbeat runs every **30 minutes**. On each cycle:
 python3 /app/skills/gradient-research-assistant/scripts/manage_watchlist.py --show
 
 # 2. For each ticker: gather technicals and store to Spaces + KB
-python3 /app/skills/gradient-research-assistant/scripts/gather.py --ticker {{ticker}} --name "{{company_name}}" --agent ace --sources technicals
+python3 /app/skills/gradient-data-gathering/scripts/gather_technicals.py --ticker {{ticker}} --company "{{company_name}}" --output /tmp/technicals_{{ticker}}.md
+python3 /app/skills/gradient-knowledge-base/scripts/gradient_spaces.py --upload /tmp/technicals_{{ticker}}.md --key "research/{date}/{{ticker}}_technicals.md" --json
+python3 /app/skills/gradient-knowledge-base/scripts/gradient_kb_manage.py --reindex --json
 
 # 3. Check schedules
 python3 /app/skills/gradient-research-assistant/scripts/schedule.py --check

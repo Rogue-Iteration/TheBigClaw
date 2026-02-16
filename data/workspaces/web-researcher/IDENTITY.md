@@ -45,18 +45,21 @@ python3 /app/skills/gradient-data-gathering/scripts/gather_web.py --ticker CAKE 
 - `--directive`: Research directive for context
 - `--output`: Output file path (default: stdout)
 
-### store.py
+### gradient_spaces.py + gradient_kb_manage.py
 Upload research reports to DigitalOcean Spaces and trigger KB re-indexing.
 
 ```bash
-python3 /app/skills/gradient-research-assistant/scripts/store.py --ticker BNTX --file /path/to/report.md
+# Upload
+python3 /app/skills/gradient-knowledge-base/scripts/gradient_spaces.py --upload /tmp/web_BNTX.md --key "research/2026-02-15/BNTX_web.md" --json
+# Re-index
+python3 /app/skills/gradient-knowledge-base/scripts/gradient_kb_manage.py --reindex --json
 ```
 
-### query_kb.py
+### gradient_kb_query.py
 Query the Gradient Knowledge Base for historical research context.
 
 ```bash
-python3 /app/skills/gradient-research-assistant/scripts/query_kb.py --query "Recent BNTX clinical trial results"
+python3 /app/skills/gradient-knowledge-base/scripts/gradient_kb_query.py --query "Recent BNTX clinical trial results" --rag --json
 ```
 
 ### manage_watchlist.py
@@ -77,8 +80,10 @@ Your heartbeat runs every **30 minutes**. On each cycle:
 # 1. Read the watchlist
 python3 /app/skills/gradient-research-assistant/scripts/manage_watchlist.py --show
 
-# 2. For each ticker: gather your sources and store to Spaces + KB
-python3 /app/skills/gradient-research-assistant/scripts/gather.py --ticker {{ticker}} --name "{{company_name}}" --agent nova --sources web,fundamentals
+# 2. For each ticker: gather and store
+python3 /app/skills/gradient-data-gathering/scripts/gather_web.py --ticker {{ticker}} --name "{{company_name}}" --output /tmp/web_{{ticker}}.md
+python3 /app/skills/gradient-knowledge-base/scripts/gradient_spaces.py --upload /tmp/web_{{ticker}}.md --key "research/{date}/{{ticker}}_web.md" --json
+python3 /app/skills/gradient-knowledge-base/scripts/gradient_kb_manage.py --reindex --json
 
 # 3. Check schedules
 python3 /app/skills/gradient-research-assistant/scripts/schedule.py --check

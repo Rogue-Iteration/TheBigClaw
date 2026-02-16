@@ -5,7 +5,7 @@
 # Runs on every container start. On first boot, configures:
 # - openclaw.json (models, agents, plugins, Telegram)
 # - Agent workspaces with persona files
-# - Skill symlinks for each agent
+# - Shared skills in ~/.openclaw/skills/ (OpenClaw-native managed dir)
 #
 # On subsequent starts, updates persona files and skills from the
 # latest image without overwriting runtime state (credentials, etc).
@@ -182,6 +182,10 @@ JSON
     "python3 /app/skills/gradient-inference/scripts/*.py *" \
     "python3 /app/skills/gradient-knowledge-base/scripts/*.py *" \
     "python3 /app/skills/gradient-data-gathering/scripts/*.py *" \
+    "python3 /root/.openclaw/skills/gradient-research-assistant/scripts/*.py *" \
+    "python3 /root/.openclaw/skills/gradient-inference/scripts/*.py *" \
+    "python3 /root/.openclaw/skills/gradient-knowledge-base/scripts/*.py *" \
+    "python3 /root/.openclaw/skills/gradient-data-gathering/scripts/*.py *" \
     "cat" "ls" "head" "tail" "sqlite3" "sqlite3 *"; do
     openclaw approvals allowlist add --target local --agent '*' --pattern "$pattern" 2>/dev/null || true
   done
@@ -193,10 +197,21 @@ fi
 # ── 2. Always: sync persona files and skills ─────────────────────
 echo "📋 Syncing persona files and skills..."
 
-# Per-agent setup
+# Copy skills to OpenClaw's managed skills dir (visible to all agents automatically)
+MANAGED_SKILLS_DIR="$STATE_DIR/skills"
+for skill in gradient-research-assistant gradient-inference gradient-knowledge-base gradient-data-gathering; do
+  SKILL_SRC="$APP_DIR/skills/$skill"
+  SKILL_DST="$MANAGED_SKILLS_DIR/$skill"
+  if [ -d "$SKILL_SRC" ]; then
+    rm -rf "$SKILL_DST"
+    cp -r "$SKILL_SRC" "$SKILL_DST"
+  fi
+done
+
+# Per-agent setup (persona files only — skills are loaded from managed dir)
 for agent in "${AGENTS[@]}"; do
   AGENT_WS="$STATE_DIR/agents/$agent/agent"
-  mkdir -p "$AGENT_WS/skills"
+  mkdir -p "$AGENT_WS"
 
   # Copy persona files (always update from image)
   SRC_DIR="$APP_DIR/data/workspaces/$agent"
@@ -205,14 +220,6 @@ for agent in "${AGENTS[@]}"; do
       [ -f "$SRC_DIR/$f" ] && cp "$SRC_DIR/$f" "$AGENT_WS/$f"
     done
   fi
-
-  # Symlink shared skills
-  for skill in gradient-research-assistant gradient-inference gradient-knowledge-base gradient-data-gathering; do
-    SHARED_SKILL_DIR="$APP_DIR/skills/$skill"
-    if [ -d "$SHARED_SKILL_DIR" ] && [ ! -e "$AGENT_WS/skills/$skill" ]; then
-      ln -s "$SHARED_SKILL_DIR" "$AGENT_WS/skills/$skill"
-    fi
-  done
 done
 
 # Shared workspace persona files (default agent fallback)
@@ -220,11 +227,6 @@ mkdir -p "$WORKSPACE_DIR"
 for f in IDENTITY.md AGENTS.md HEARTBEAT.md; do
   [ -f "$APP_DIR/data/workspace/$f" ] && cp "$APP_DIR/data/workspace/$f" "$WORKSPACE_DIR/$f"
 done
-
-# Shared workspace skills symlink
-if [ ! -e "$WORKSPACE_DIR/skills" ]; then
-  ln -s "$APP_DIR/skills" "$WORKSPACE_DIR/skills"
-fi
 
 echo "  ✓ Agents: Max + Nova + Luna + Ace"
 

@@ -47,9 +47,10 @@ Do NOT spam the user with routine chatter. If it's just background noise, log it
 
 ## Tools Available
 
-- `gather_social.py` — Fetch Reddit posts and calculate sentiment signals for a ticker
-- `store.py` — Upload research to DO Spaces and trigger KB indexing
-- `query_kb.py` — Query the knowledge base for historical context
+- `gather_social.py` — Fetch Reddit posts and calculate sentiment signals (gradient-data-gathering)
+- `gradient_spaces.py` — Upload research to DO Spaces (gradient-knowledge-base)
+- `gradient_kb_manage.py` — Trigger KB re-indexing (gradient-knowledge-base)
+- `gradient_kb_query.py` — Query the knowledge base for historical context (gradient-knowledge-base)
 - `manage_watchlist.py` — Read the watchlist (read-only for you)
 - `alert.py` — Format and send alerts to the user
 

@@ -7,9 +7,10 @@
    b. After completing each, mark it as run: `python3 /app/skills/gradient-research-assistant/scripts/schedule.py --mark-run {id} --agent nova`
 1. **Load watchlist** — Run `python3 /app/skills/gradient-research-assistant/scripts/manage_watchlist.py --show` for current tickers, themes, and directives
 2. **For each ticker on the watchlist**:
-   a. Run `gather_web.py` with the ticker symbol, company name, and any theme/directive
-   b. Run `store.py` to upload the research report to DO Spaces and trigger KB re-indexing
-   c. Evaluate findings — if anything is genuinely notable, prepare an alert
+   a. Gather web research: `python3 /app/skills/gradient-data-gathering/scripts/gather_web.py --ticker TICKER --name "Company Name" --output /tmp/web_TICKER.md`
+   b. Upload to DO Spaces: `python3 /app/skills/gradient-knowledge-base/scripts/gradient_spaces.py --upload /tmp/web_TICKER.md --key "research/{date}/TICKER_web.md" --json`
+   c. Trigger KB re-indexing: `python3 /app/skills/gradient-knowledge-base/scripts/gradient_kb_manage.py --reindex --json`
+   d. Evaluate findings — if anything is genuinely notable, prepare an alert
 3. **Check for inter-agent requests** — If Max sent a request via `sessions_send`, formulate a precise response (1 response only)
 4. **Optionally contact Max** — If your findings are significant enough to warrant his attention before his next heartbeat, send 1 request via `sessions_send`
 5. **Send alerts** — If any ticker produced notable findings, **message the user directly** with your findings. Also notify Max so he can synthesize.

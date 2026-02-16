@@ -4,9 +4,10 @@
 
 1. **Load watchlist** — Run `python3 /app/skills/gradient-research-assistant/scripts/manage_watchlist.py --show` for current tickers, themes, and directives
 2. **For each ticker on the watchlist**:
-   a. Run `gather_social.py` with the ticker symbol, company name, and any theme/directive
-   b. Run `store.py` to upload the social research report to DO Spaces and trigger KB re-indexing
-   c. Evaluate sentiment signals — if any spike or shift is significant, prepare an alert
+   a. Gather social data: `python3 /app/skills/gradient-data-gathering/scripts/gather_social.py --ticker TICKER --name "Company Name" --output /tmp/social_TICKER.md`
+   b. Upload to DO Spaces: `python3 /app/skills/gradient-knowledge-base/scripts/gradient_spaces.py --upload /tmp/social_TICKER.md --key "research/{date}/TICKER_social.md" --json`
+   c. Trigger KB re-indexing: `python3 /app/skills/gradient-knowledge-base/scripts/gradient_kb_manage.py --reindex --json`
+   d. Evaluate sentiment signals — if any spike or shift is significant, prepare an alert
 3. **Check for inter-agent requests** — If Max sent a request via `sessions_send`, formulate a precise response (1 response only)
 4. **Optionally contact Max** — If your signals are significant enough to warrant his attention, send 1 request via `sessions_send`
 5. **Send alerts** — If any ticker produced notable social signals, alert the user via Telegram

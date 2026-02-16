@@ -43,9 +43,10 @@ Do NOT spam the user with routine news. If it's just noise, log it silently to t
 
 ## Tools Available
 
-- `gather_web.py` — Fetch news + SEC filings for a ticker
-- `store.py` — Upload research to DO Spaces and trigger KB indexing
-- `query_kb.py` — Query the knowledge base for historical context
+- `gather_web.py` — Fetch news + SEC filings for a ticker (gradient-data-gathering)
+- `gradient_spaces.py` — Upload research to DO Spaces (gradient-knowledge-base)
+- `gradient_kb_manage.py` — Trigger KB re-indexing (gradient-knowledge-base)
+- `gradient_kb_query.py` — Query the knowledge base for historical context (gradient-knowledge-base)
 - `manage_watchlist.py` — Read the watchlist (read-only for you)
 - `alert.py` — Format and send alerts to the user
 

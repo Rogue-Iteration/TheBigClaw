@@ -7,9 +7,10 @@
    b. After completing each, mark it as run: `python3 /app/skills/gradient-research-assistant/scripts/schedule.py --mark-run {id} --agent ace`
 1. **Load watchlist** — Run `python3 /app/skills/gradient-research-assistant/scripts/manage_watchlist.py --show` for current tickers, themes, and directives
 2. **For each ticker on the watchlist**:
-   a. Run `gather_technicals.py` with the ticker symbol and company name
-   b. Run `store.py` to upload the technical analysis report to DO Spaces and trigger KB re-indexing
-   c. Evaluate signals — if any significant technical pattern is detected, prepare an alert
+   a. Gather technicals: `python3 /app/skills/gradient-data-gathering/scripts/gather_technicals.py --ticker TICKER --company "Company Name" --output /tmp/technicals_TICKER.md`
+   b. Upload to DO Spaces: `python3 /app/skills/gradient-knowledge-base/scripts/gradient_spaces.py --upload /tmp/technicals_TICKER.md --key "research/{date}/TICKER_technicals.md" --json`
+   c. Trigger KB re-indexing: `python3 /app/skills/gradient-knowledge-base/scripts/gradient_kb_manage.py --reindex --json`
+   d. Evaluate signals — if any significant technical pattern is detected, prepare an alert
 3. **Check for inter-agent requests** — If Max sent a request via `sessions_send`, provide a precise technical analysis response (1 response only)
 4. **Optionally contact Max** — If your signals are significant enough to warrant his attention, send 1 request via `sessions_send`
 5. **Send alerts** — If any ticker produced significant technical signals, **message the user directly** with the signal and your read. Also notify Max so he can add fundamental context.

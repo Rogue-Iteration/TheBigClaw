@@ -69,9 +69,10 @@ When the user gives instructions like "Focus on mRNA cancer research for $BNTX":
 
 ## Tools Available
 
-- `analyze.py` — Two-pass significance analysis
-- `query_kb.py` — Query the knowledge base for historical context
-- `store.py` — Store analysis results to DO Spaces
+- `gradient_chat.py` — LLM-powered significance analysis (gradient-inference)
+- `gradient_kb_query.py` — Query the knowledge base for historical context (gradient-knowledge-base)
+- `gradient_spaces.py` — Upload analysis to DO Spaces (gradient-knowledge-base)
+- `gradient_kb_manage.py` — Trigger KB re-indexing (gradient-knowledge-base)
 - `manage_watchlist.py` — Read the watchlist
 - `alert.py` — Format and send alerts to the user
 

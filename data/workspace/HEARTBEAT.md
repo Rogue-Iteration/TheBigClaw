@@ -19,24 +19,28 @@ python3 manage_watchlist.py --show
 
 ```bash
 # Nova: gather news + SEC filings
-python3 gather_web.py --ticker {{ticker}} --name "{{company_name}}" --output /tmp/web_{{ticker}}.md
+python3 /app/skills/gradient-data-gathering/scripts/gather_web.py --ticker {{ticker}} --name "{{company_name}}" --output /tmp/web_{{ticker}}.md
 
 # Luna: gather social sentiment
-python3 gather_social.py --ticker {{ticker}} --company "{{company_name}}" --output /tmp/social_{{ticker}}.md
+python3 /app/skills/gradient-data-gathering/scripts/gather_social.py --ticker {{ticker}} --company "{{company_name}}" --output /tmp/social_{{ticker}}.md
 
 # Ace: gather technical data
-python3 gather_technicals.py --ticker {{ticker}} --company "{{company_name}}" --output /tmp/technicals_{{ticker}}.md
+python3 /app/skills/gradient-data-gathering/scripts/gather_technicals.py --ticker {{ticker}} --company "{{company_name}}" --output /tmp/technicals_{{ticker}}.md
 
-# Store all reports to DO Spaces and trigger KB re-indexing
-python3 store.py --ticker {{ticker}} --data /tmp/web_{{ticker}}.md
-python3 store.py --ticker {{ticker}} --data /tmp/social_{{ticker}}.md
-python3 store.py --ticker {{ticker}} --data /tmp/technicals_{{ticker}}.md
+# Store all reports to DO Spaces
+python3 /app/skills/gradient-knowledge-base/scripts/gradient_spaces.py --upload /tmp/web_{{ticker}}.md --key "research/{date}/{{ticker}}_web.md" --json
+python3 /app/skills/gradient-knowledge-base/scripts/gradient_spaces.py --upload /tmp/social_{{ticker}}.md --key "research/{date}/{{ticker}}_social.md" --json
+python3 /app/skills/gradient-knowledge-base/scripts/gradient_spaces.py --upload /tmp/technicals_{{ticker}}.md --key "research/{date}/{{ticker}}_technicals.md" --json
 
-# Max: analyze significance across all data
-python3 analyze.py --ticker {{ticker}} --name "{{company_name}}" --data /tmp/web_{{ticker}}.md --verbose
+# Trigger KB re-indexing
+python3 /app/skills/gradient-knowledge-base/scripts/gradient_kb_manage.py --reindex --json
+
+# Max: query KB and analyze significance
+python3 /app/skills/gradient-knowledge-base/scripts/gradient_kb_query.py --query "Latest research findings for ${{ticker}}" --rag --json
+python3 /app/skills/gradient-inference/scripts/gradient_chat.py --prompt "Analyze significance..." --json
 ```
 
-3. **If any ticker's analysis returns `should_alert: true`**, proactively send the user an alert message with the formatted details. Use the severity-appropriate emoji:
+3. **If any ticker's analysis reveals significant findings**, proactively send the user an alert message. Use the severity-appropriate emoji:
    - 🔴 Score 8-10 (critical)
    - 🟡 Score 6-7 (notable)
    - 🟢 Score 1-5 (low significance)

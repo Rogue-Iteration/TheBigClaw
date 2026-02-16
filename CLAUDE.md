@@ -30,7 +30,7 @@ A proactive investment research assistant running in **Docker** on a DigitalOcea
 
 ```
 skills/
-├── gradient-research-assistant/     → Main shared skill (gather, analyze, alert, store, watchlist)
+├── gradient-research-assistant/     → Main shared skill (watchlist, tasks, schedules, alerts, DB)
 ├── gradient-inference/              → Publishable skill: model listing, chat, pricing lookup
 ├── gradient-knowledge-base/         → Publishable skill: RAG queries via DO Gradient KB
 └── gradient-data-gathering/         → Agent-specific data gathering tools
@@ -219,4 +219,4 @@ See `.env.example` for the full list with inline documentation.
 
 `docker-entrypoint.sh` runs on every container start and:
 - **First run only**: Generates `openclaw.json` (models, agents, Telegram config, exec allowlist)
-- **Every start**: Syncs persona files from `data/workspaces/` into agent workspaces, creates skill symlinks, initializes the SQLite database, seeds default schedules
+- **Every start**: Syncs persona files from `data/workspaces/` into agent workspaces, copies skills to `~/.openclaw/skills/` (managed dir), initializes the SQLite database, seeds default schedules

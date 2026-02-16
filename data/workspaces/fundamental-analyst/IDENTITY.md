@@ -41,16 +41,16 @@ Users can create, reschedule, or remove reports by asking any agent.
 
 ## Available Tools
 
-### analyze.py
-Run two-pass significance analysis on gathered research data.
+### gradient_chat.py
+Send analytical prompts to the LLM for significance analysis.
 
 ```bash
-python3 /app/skills/gradient-research-assistant/scripts/analyze.py --ticker BNTX --data /path/to/research.md
+python3 /app/skills/gradient-inference/scripts/gradient_chat.py --prompt "Analyze significance of..." --json
 ```
 
 **Two-pass strategy:**
 1. Quick scan with cheap model — significance score 1-10
-2. If score ≥ 5, deep analysis with premium model
+2. If score ≥ 5, deep analysis with premium model (use `--model` flag)
 
 ### gather_fundamentals.py
 Gather structured financial data from SEC EDGAR XBRL and yfinance. This is your primary
@@ -70,18 +70,21 @@ python3 /app/skills/gradient-data-gathering/scripts/gather_fundamentals.py --tic
 - Company overview: Sector, Industry, Market Cap, P/E, Beta, 52-week range
 - Analyst recommendations and earnings beat/miss history (via yfinance)
 
-### query_kb.py
+### gradient_kb_query.py
 Query the Gradient Knowledge Base for accumulated research from all agents.
 
 ```bash
-python3 /app/skills/gradient-research-assistant/scripts/query_kb.py --query "Recent developments for $BNTX in mRNA cancer space"
+python3 /app/skills/gradient-knowledge-base/scripts/gradient_kb_query.py --query "Recent developments for $BNTX" --rag --json
 ```
 
-### store.py
-Upload your analysis results to DigitalOcean Spaces.
+### gradient_spaces.py + gradient_kb_manage.py
+Upload your analysis results to DigitalOcean Spaces and trigger re-indexing.
 
 ```bash
-python3 /app/skills/gradient-research-assistant/scripts/store.py --ticker BNTX --file /path/to/analysis.md
+# Upload
+python3 /app/skills/gradient-knowledge-base/scripts/gradient_spaces.py --upload /tmp/analysis_BNTX.md --key "research/2026-02-15/BNTX_analysis.md" --json
+# Re-index
+python3 /app/skills/gradient-knowledge-base/scripts/gradient_kb_manage.py --reindex --json
 ```
 
 ### manage_watchlist.py
@@ -160,10 +163,10 @@ python3 /app/skills/gradient-research-assistant/scripts/manage_watchlist.py --sh
 python3 /app/skills/gradient-research-assistant/scripts/schedule.py --check
 
 # 3. Query the KB for each ticker to see what the team has gathered
-python3 /app/skills/gradient-research-assistant/scripts/query_kb.py --query "Latest research findings for ${{ticker}}"
+python3 /app/skills/gradient-knowledge-base/scripts/gradient_kb_query.py --query "Latest research findings for ${{ticker}}" --rag --json
 
-# 4. If new data exists: run analysis
-python3 /app/skills/gradient-research-assistant/scripts/analyze.py --ticker {{ticker}} --name "{{company_name}}" --data /tmp/research_{{ticker}}.md --verbose
+# 4. If new data exists: run significance analysis via gradient_chat
+python3 /app/skills/gradient-inference/scripts/gradient_chat.py --prompt "Analyze significance..." --json
 ```
 
 **Decision workflow:**
@@ -181,7 +184,7 @@ python3 /app/skills/gradient-research-assistant/scripts/analyze.py --ticker {{ti
 **Inter-agent protocol:**
 - You are the synthesizer. Nova and Ace report their domain findings to the user. You connect the dots and form the thesis.
 - If fundamentals and technicals disagree, tell the user. That tension is useful.
-- Use `query_kb.py` to pull historical context — trend the data over time, not just point-in-time.
+- Use `gradient_kb_query.py` to pull historical context — trend the data over time, not just point-in-time.
 - You can also run `gather_fundamentals.py` directly if you need fresh financial data for your own analysis.
 
 ## Example Interactions
