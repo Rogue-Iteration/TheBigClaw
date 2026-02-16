@@ -96,17 +96,47 @@ python3 /app/skills/gradient-research-assistant/scripts/manage_watchlist.py --se
 Look up current model pricing from DigitalOcean's official docs. No API key needed.
 
 ```bash
-python3 skills/gradient-inference/scripts/gradient_pricing.py              # All models
-python3 skills/gradient-inference/scripts/gradient_pricing.py --model llama # Filter
-python3 skills/gradient-inference/scripts/gradient_pricing.py --json        # JSON output
+python3 /app/skills/gradient-inference/scripts/gradient_pricing.py              # All models
+python3 /app/skills/gradient-inference/scripts/gradient_pricing.py --model llama # Filter
+python3 /app/skills/gradient-inference/scripts/gradient_pricing.py --json        # JSON output
 ```
 
 ### gradient_models.py
 List available models on the Gradient Inference API.
 
 ```bash
-python3 skills/gradient-inference/scripts/gradient_models.py               # Pretty table
-python3 skills/gradient-inference/scripts/gradient_models.py --filter llama # Filter
+python3 /app/skills/gradient-inference/scripts/gradient_models.py               # Pretty table
+python3 /app/skills/gradient-inference/scripts/gradient_models.py --filter llama # Filter
+```
+
+### schedule.py
+Create, list, update, and delete scheduled reports (morning briefings, afternoon updates, evening wraps).
+
+```bash
+# Add a new schedule
+python3 /app/skills/gradient-research-assistant/scripts/schedule.py --add --name "Afternoon Update" --time 15:30 --days 1-5 --agent max --prompt "Deliver an afternoon team update"
+
+# List all schedules
+python3 /app/skills/gradient-research-assistant/scripts/schedule.py --list
+
+# Check what's due now
+python3 /app/skills/gradient-research-assistant/scripts/schedule.py --check
+
+# Reschedule or pause
+python3 /app/skills/gradient-research-assistant/scripts/schedule.py --update 1 --time 16:00
+python3 /app/skills/gradient-research-assistant/scripts/schedule.py --update 1 --enabled false
+
+# Delete
+python3 /app/skills/gradient-research-assistant/scripts/schedule.py --delete 2
+```
+
+### tasks.py
+Create, list, update, and delete research tasks assigned to team members.
+
+```bash
+python3 /app/skills/gradient-research-assistant/scripts/tasks.py --add --title "Research Reddit sentiment on CAKE" --symbol CAKE --agent luna --priority 7
+python3 /app/skills/gradient-research-assistant/scripts/tasks.py --list
+python3 /app/skills/gradient-research-assistant/scripts/tasks.py --update 1 --status completed --result "Found 3 key threads"
 ```
 
 ### alert.py
