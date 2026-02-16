@@ -197,10 +197,16 @@ fi
 # ── 2. Always: sync persona files and skills ─────────────────────
 echo "📋 Syncing persona files and skills..."
 
-# Copy skills to OpenClaw's managed skills dir (visible to all agents automatically)
+# Install published skills from ClawHub (force-reinstall every startup)
 MANAGED_SKILLS_DIR="$STATE_DIR/skills"
 mkdir -p "$MANAGED_SKILLS_DIR"
-for skill in gradient-research-assistant gradient-inference gradient-knowledge-base gradient-data-gathering; do
+for skill in gradient-knowledge-base gradient-inference; do
+  echo "  📦 Installing $skill from ClawHub..."
+  npx clawhub@latest install "$skill" --dir "$MANAGED_SKILLS_DIR" --force 2>&1 | tail -1
+done
+
+# Copy local-only skills (not published to ClawHub)
+for skill in gradient-data-gathering gradient-research-assistant; do
   SKILL_SRC="$APP_DIR/skills/$skill"
   SKILL_DST="$MANAGED_SKILLS_DIR/$skill"
   if [ -d "$SKILL_SRC" ]; then

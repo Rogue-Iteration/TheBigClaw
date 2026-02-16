@@ -22,8 +22,8 @@ metadata:
         - requests>=2.31.0
         - boto3>=1.34.0
   author: Rogue Iteration
-  version: "0.1.1"
-  tags: ["gradient", "knowledge-base", "rag", "spaces", "do", "digitalocean"]
+  version: "0.1.2"
+  tags: ["digitalocean", "gradient-ai", "knowledge-base", "rag", "semantic-search", "do-spaces"]
 ---
 
 # 🦞 Gradient AI — Knowledge Bases & RAG
