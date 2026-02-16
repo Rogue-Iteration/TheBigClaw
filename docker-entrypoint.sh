@@ -198,11 +198,24 @@ fi
 echo "📋 Syncing persona files and skills..."
 
 # Install published skills from ClawHub (force-reinstall every startup)
+# If ClawHub install fails (e.g. security scan pending), fall back to local copy
 MANAGED_SKILLS_DIR="$STATE_DIR/skills"
 mkdir -p "$MANAGED_SKILLS_DIR"
-for skill in gradient-knowledge-base gradient-inference; do
+CLAWHUB_SKILLS="gradient-knowledge-base gradient-inference"
+for skill in $CLAWHUB_SKILLS; do
   echo "  📦 Installing $skill from ClawHub..."
-  npx clawhub@latest install "$skill" --dir "$MANAGED_SKILLS_DIR" --force 2>&1 | tail -1
+  INSTALL_OUTPUT=$(npx clawhub@latest install "$skill" --dir "$MANAGED_SKILLS_DIR" --force 2>&1) || true
+  if [ -d "$MANAGED_SKILLS_DIR/$skill" ] && [ -f "$MANAGED_SKILLS_DIR/$skill/SKILL.md" ]; then
+    echo "  ✓ $skill installed from ClawHub"
+  else
+    echo "  ⚠️  ClawHub install failed for $skill — using local copy"
+    echo "     ($INSTALL_OUTPUT)"
+    SKILL_SRC="$APP_DIR/skills/$skill"
+    if [ -d "$SKILL_SRC" ]; then
+      rm -rf "$MANAGED_SKILLS_DIR/$skill"
+      cp -r "$SKILL_SRC" "$MANAGED_SKILLS_DIR/$skill"
+    fi
+  fi
 done
 
 # Copy local-only skills (not published to ClawHub)
