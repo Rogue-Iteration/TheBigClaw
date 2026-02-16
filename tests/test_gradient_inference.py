@@ -9,6 +9,7 @@ Tests cover:
 """
 
 import json
+import time
 from pathlib import Path
 
 import pytest
@@ -315,3 +316,215 @@ class TestPickApi:
 
     def test_returns_chat_completions_url(self):
         assert pick_api(False) == CHAT_COMPLETIONS_URL
+
+
+# ─── Pricing ──────────────────────────────────────────────────────
+
+from gradient_pricing import (
+    _parse_price,
+    fetch_pricing_live,
+    get_pricing,
+    filter_pricing,
+    format_pricing_table,
+    PRICING_URL,
+    CACHE_PATH,
+    FALLBACK_PATH,
+)
+
+
+SAMPLE_PRICING_HTML = """
+<html><body>
+<h2 id="foundation-model-usage">Foundation Model Usage</h2>
+<div>
+  <input type="radio" name="foundation-model-pricing" id="foundation-model-pricingopenai">
+  <label for="foundation-model-pricingopenai">OpenAI</label>
+  <div class="tab-content">
+    <table>
+      <thead><tr><th>Model</th><th>Serverless Inference and ADK</th><th>Agent Usage</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><a href="#">gpt-oss-120b</a></td>
+          <td>$0.10 per 1M input tokens<br>$0.70 per 1M output tokens</td>
+          <td>Same as serverless inference</td>
+        </tr>
+        <tr>
+          <td><a href="#">GPT-5 mini</a></td>
+          <td>$0.25 per 1M input tokens<br>$2.00 per 1M output tokens</td>
+          <td>Same as serverless inference</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <input type="radio" name="foundation-model-pricing" id="foundation-model-pricingmeta">
+  <label for="foundation-model-pricingmeta">Meta</label>
+  <div class="tab-content">
+    <table>
+      <thead><tr><th>Model</th><th>Serverless Inference and ADK</th><th>Agent Usage</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><a href="#">Llama 3.3 Instruct-70B</a></td>
+          <td>$0.65 per 1M input tokens<br>$0.65 per 1M output tokens</td>
+          <td>Same as serverless inference</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+</body></html>
+"""
+
+
+class TestParsePrice:
+    def test_input_output_format(self):
+        text = "$0.10 per 1M input tokens\n$0.70 per 1M output tokens"
+        result = _parse_price(text)
+        assert result["input"] == 0.10
+        assert result["output"] == 0.70
+
+    def test_same_price_format(self):
+        text = "$0.65 per 1M tokens"
+        result = _parse_price(text)
+        assert result["input"] == 0.65
+        assert result["output"] == 0.65
+
+    def test_no_price_found(self):
+        text = "Contact sales for pricing"
+        result = _parse_price(text)
+        assert result["input"] is None
+        assert result["output"] is None
+
+
+class TestFetchPricingLive:
+    @responses.activate
+    def test_successful_scrape(self):
+        responses.add(
+            responses.GET,
+            PRICING_URL,
+            body=SAMPLE_PRICING_HTML,
+            status=200,
+        )
+
+        result = fetch_pricing_live()
+        assert result["success"] is True
+        assert len(result["models"]) == 3
+        names = [m["model"] for m in result["models"]]
+        assert "gpt-oss-120b" in names
+        assert "GPT-5 mini" in names
+        assert "Llama 3.3 Instruct-70B" in names
+
+    @responses.activate
+    def test_extracts_correct_prices(self):
+        responses.add(
+            responses.GET,
+            PRICING_URL,
+            body=SAMPLE_PRICING_HTML,
+            status=200,
+        )
+
+        result = fetch_pricing_live()
+        gpt_oss = [m for m in result["models"] if m["model"] == "gpt-oss-120b"][0]
+        assert gpt_oss["input_price"] == 0.10
+        assert gpt_oss["output_price"] == 0.70
+        assert gpt_oss["provider"] == "OpenAI"
+
+    @responses.activate
+    def test_handles_network_error(self):
+        responses.add(
+            responses.GET,
+            PRICING_URL,
+            body="Server Error",
+            status=500,
+        )
+
+        result = fetch_pricing_live()
+        assert result["success"] is False
+
+    @responses.activate
+    def test_handles_missing_section(self):
+        responses.add(
+            responses.GET,
+            PRICING_URL,
+            body="<html><body><h2 id='other'>Other</h2></body></html>",
+            status=200,
+        )
+
+        result = fetch_pricing_live()
+        assert result["success"] is False
+        assert "Foundation Model Usage" in result["message"]
+
+
+class TestGetPricing:
+    def test_uses_cache_when_fresh(self, tmp_path, monkeypatch):
+        cache_data = {
+            "success": True,
+            "models": [{"provider": "Test", "model": "test-model", "input_price": 1.0, "output_price": 2.0}],
+            "fetched_at": "2026-01-01T00:00:00Z",
+            "cached_at": time.time(),  # Fresh
+        }
+        cache_file = tmp_path / "cache.json"
+        cache_file.write_text(json.dumps(cache_data))
+
+        import gradient_pricing
+        monkeypatch.setattr(gradient_pricing, "CACHE_PATH", cache_file)
+
+        result = get_pricing(use_cache=True)
+        assert result["source"] == "cache"
+        assert len(result["models"]) == 1
+
+    @responses.activate
+    def test_falls_back_to_snapshot(self, monkeypatch):
+        responses.add(
+            responses.GET,
+            PRICING_URL,
+            body="Server Error",
+            status=500,
+        )
+
+        import gradient_pricing
+        monkeypatch.setattr(gradient_pricing, "CACHE_PATH", Path("/tmp/nonexistent_cache_test.json"))
+
+        result = get_pricing(use_cache=False)
+        # Should use fallback if snapshot exists
+        if FALLBACK_PATH.exists():
+            assert len(result["models"]) > 0
+            assert "snapshot" in result.get("message", "").lower() or result.get("source") == "fallback"
+
+
+class TestFilterPricing:
+    def test_filter_by_model(self):
+        models = [
+            {"provider": "OpenAI", "model": "gpt-oss-120b"},
+            {"provider": "Meta", "model": "Llama 3.3"},
+        ]
+        result = filter_pricing(models, "llama")
+        assert len(result) == 1
+        assert result[0]["model"] == "Llama 3.3"
+
+    def test_filter_by_provider(self):
+        models = [
+            {"provider": "OpenAI", "model": "gpt-oss-120b"},
+            {"provider": "Meta", "model": "Llama 3.3"},
+        ]
+        result = filter_pricing(models, "openai")
+        assert len(result) == 1
+
+    def test_filter_case_insensitive(self):
+        models = [{"provider": "OpenAI", "model": "GPT-5"}]
+        result = filter_pricing(models, "gpt")
+        assert len(result) == 1
+
+
+class TestFormatPricingTable:
+    def test_empty_list(self):
+        output = format_pricing_table([])
+        assert "No pricing data" in output
+
+    def test_formats_models(self):
+        models = [
+            {"provider": "OpenAI", "model": "gpt-oss-120b", "input_price": 0.10, "output_price": 0.70, "unit": "per 1M tokens"},
+        ]
+        output = format_pricing_table(models)
+        assert "gpt-oss-120b" in output
+        assert "$0.1" in output
+        assert "1 models" in output
+

@@ -1,13 +1,15 @@
 ---
 name: gradient-inference
 description: >
-  Call DigitalOcean Gradient AI LLMs via Serverless Inference.
-  Discover available models, run chat completions or the Responses API
+  Community skill (unofficial) for DigitalOcean Gradient AI Serverless Inference.
+  Discover available models and pricing, run chat completions or the Responses API
   with prompt caching, and generate images. OpenAI-compatible.
 files: ["scripts/*"]
 homepage: https://github.com/Rogue-Iteration/TheBigClaw
 metadata:
-  clawdbot:
+  openclaw:
+    emoji: "🧠"
+    primaryEnv: GRADIENT_API_KEY
     requires:
       env:
         - GRADIENT_API_KEY
@@ -19,6 +21,8 @@ metadata:
 ---
 
 # 🦞 Gradient AI — Serverless Inference
+
+> ⚠️ **This is an unofficial community skill**, not maintained by DigitalOcean. Use at your own risk.
 
 > *"Why manage GPUs when the ocean provides?" — ancient lobster proverb*
 
@@ -185,6 +189,28 @@ Always run `python3 gradient_models.py` to check what's currently available — 
 
 ---
 
+### 💰 Model Pricing Lookup
+
+Check what models cost *before* you rack up a bill. Scrapes the official [DigitalOcean pricing page](https://docs.digitalocean.com/products/gradient-ai-platform/details/pricing/) — no API key needed.
+
+```bash
+python3 gradient_pricing.py                    # Pretty table
+python3 gradient_pricing.py --json             # Machine-readable
+python3 gradient_pricing.py --model "llama"    # Filter by model name
+python3 gradient_pricing.py --no-cache         # Skip cache, fetch live
+```
+
+**How it works:**
+- Fetches live pricing from DigitalOcean's docs (public page, no auth)
+- Caches results for 24 hours in `/tmp/gradient_pricing_cache.json`
+- Falls back to a bundled snapshot if the live fetch fails
+
+> **🦞 Pro tip:** Run `python3 gradient_pricing.py --model "gpt-oss"` before choosing a model to see the cost difference between `gpt-oss-120b` ($0.10/$0.70) and `gpt-oss-20b` ($0.05/$0.45) per 1M tokens.
+
+📖 *[Pricing docs](https://docs.digitalocean.com/products/gradient-ai-platform/details/pricing/)*
+
+---
+
 ## CLI Reference
 
 All scripts accept `--json` for machine-readable output.
@@ -196,6 +222,7 @@ gradient_chat.py     --prompt TEXT [--model ID] [--system TEXT]
                      [--max-tokens N] [--json]
 gradient_image.py    --prompt TEXT [--model ID] [--output PATH]
                      [--size WxH] [--json]
+gradient_pricing.py  [--json] [--model QUERY] [--no-cache]
 ```
 
 ## External Endpoints
@@ -206,6 +233,7 @@ gradient_image.py    --prompt TEXT [--model ID] [--output PATH]
 | `https://inference.do-ai.run/v1/chat/completions` | Chat Completions API |
 | `https://inference.do-ai.run/v1/responses` | Responses API (recommended) |
 | `https://inference.do-ai.run/v1/images/generations` | Image generation |
+| `https://docs.digitalocean.com/.../pricing/` | Pricing page (scraped, public) |
 
 ## Security & Privacy
 

@@ -1,13 +1,15 @@
 ---
 name: gradient-knowledge-base
 description: >
-  Build and query DigitalOcean Gradient Knowledge Bases for RAG.
-  Store documents in DO Spaces, configure data sources, manage
-  indexing, and run semantic or hybrid search queries.
+  Community skill (unofficial) for DigitalOcean Gradient Knowledge Bases.
+  Build RAG pipelines: store documents in DO Spaces, configure data sources,
+  manage indexing, and run semantic or hybrid search queries.
 files: ["scripts/*"]
 homepage: https://github.com/Rogue-Iteration/TheBigClaw
 metadata:
-  clawdbot:
+  openclaw:
+    emoji: "📚"
+    primaryEnv: DO_API_TOKEN
     requires:
       env:
         - DO_API_TOKEN
@@ -21,6 +23,8 @@ metadata:
 ---
 
 # 🦞 Gradient AI — Knowledge Bases & RAG
+
+> ⚠️ **This is an unofficial community skill**, not maintained by DigitalOcean. Use at your own risk.
 
 > *"A lobster never forgets. Neither should your agent." — the KB lobster*
 
