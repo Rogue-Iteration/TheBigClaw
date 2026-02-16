@@ -15,10 +15,14 @@ metadata:
         - DO_API_TOKEN
         - DO_SPACES_ACCESS_KEY
         - DO_SPACES_SECRET_KEY
+        - GRADIENT_API_KEY
       bins:
         - python3
+      pip:
+        - requests>=2.31.0
+        - boto3>=1.34.0
   author: Rogue Iteration
-  version: "0.1.0"
+  version: "0.1.1"
   tags: ["gradient", "knowledge-base", "rag", "spaces", "do", "digitalocean"]
 ---
 
