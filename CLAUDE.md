@@ -6,12 +6,13 @@ A proactive investment research assistant running in **Docker** on a DigitalOcea
 
 ## Architecture
 
-- **Runtime**: OpenClaw gateway running in a Docker container
+- **Runtime**: OpenClaw gateway running in a Docker container on a DO Droplet
 - **AI Backend**: Gradient AI (GPT OSS 120B, Llama 3.3, DeepSeek R1, Qwen3) via DO Inference API
 - **Agents**: Max (fundamental analyst, default), Nova (web researcher), Luna (social researcher), Ace (technical analyst)
-- **Messaging**: Telegram bot integration
+- **Messaging**: Telegram — one bot per agent, routed via OpenClaw bindings
 - **Storage**: DigitalOcean Spaces (S3-compatible) + Gradient Knowledge Base for RAG
-- **Skills**: Python scripts in `skills/` — shared (`gradient-research-assistant/`) and agent-specific
+- **State**: SQLite database (`~/.openclaw/research.db`) — watchlist, settings, tasks, logs
+- **Skills**: Python scripts in `skills/` — shared and per-skill
 
 ## Tech Stack
 
@@ -22,47 +23,124 @@ A proactive investment research assistant running in **Docker** on a DigitalOcea
 | Dependencies  | requests, beautifulsoup4, feedparser, boto3, yfinance |
 | Infra         | Docker, DigitalOcean Droplet, Spaces, Gradient AI |
 | Gateway       | OpenClaw (Node.js / pnpm)                   |
-| CI/CD         | GitHub Actions → GHCR                       |
 
 ## Key Directories
 
 ```
-skills/gradient-research-assistant/  → Shared skill tools (gather, analyze, alert, store, etc.)
-skills/{agent-name}/                 → Agent-specific skill tools
-data/workspace/                      → Shared persona files (IDENTITY, AGENTS, HEARTBEAT)
-data/workspaces/{agent-name}/        → Per-agent persona files
-tests/                               → pytest unit tests
+skills/
+├── gradient-research-assistant/     → Main shared skill (gather, analyze, alert, store, watchlist)
+├── gradient-inference/              → Publishable skill: model listing, chat, pricing lookup
+├── gradient-knowledge-base/         → Publishable skill: RAG queries via DO Gradient KB
+└── gradient-data-gathering/         → Agent-specific data gathering tools
+
+data/
+├── workspace/                       → Shared persona files (AGENTS.md — all agents see this)
+└── workspaces/{agent-name}/         → Per-agent persona files (IDENTITY.md, AGENTS.md, HEARTBEAT.md)
+
+tests/                               → pytest unit tests (test_*.py)
 ```
 
-## Deployment
+---
 
-### Production Deployment
+## Development Flow
 
-**You are expected to handle production deployments yourself.** The workflow is:
+All development happens **locally**. All testing happens against the **Droplet**.
 
-1. Commit and push changes to `main`
-2. Run locally: `bash install.sh --update`
-3. Or SSH into the Droplet: `ssh root@<droplet-ip>` → `cd /opt/openclaw && bash deploy.sh`
+### The Loop
 
-`install.sh --update` SCPs the `.env`, pulls latest code, and runs `docker compose up -d --build`.
-`deploy.sh` does `git pull` + `docker compose up -d --build` directly on the Droplet.
+1. **Edit code locally** — skill scripts, persona files, entrypoint, etc.
+2. **Run tests locally** — `python3 -m pytest tests/ -v`
+3. **Commit and push** — `git add -A && git commit -m "..." && git push origin main`
+4. **Deploy** — `bash install.sh --update` (from your local machine)
+5. **Test on Telegram** — talk to the bots, verify behavior
 
-### First-Time Setup
+### Deploy Workflow
 
-For deploying a new Droplet from scratch:
-1. Fill out `.env` (see `.env.example`)
-2. Run `bash install.sh`
-
-See `README.md` for full prerequisites guide.
-
-### Container Management
+There is a codified workflow at `.agent/workflows/deploy.md`. The steps:
 
 ```bash
-docker logs -f openclaw-research    # Tail logs
-docker compose restart              # Restart
-docker compose down                 # Stop
-docker compose up -d --build        # Rebuild and start
+# Step 1: Commit and push
+git add -A && git commit -m "<message>" && git push origin main
+
+# Step 2: Deploy to Droplet (SCPs .env, git pulls, rebuilds Docker)
+bash install.sh --update
 ```
+
+`install.sh --update` does:
+- SCPs `.env` to the Droplet
+- Runs `git pull origin main` on the Droplet
+- Runs `docker compose up -d --build` to rebuild and restart
+- Verifies the container is running
+
+### Alternative: Deploy from the Droplet
+
+```bash
+ssh root@<droplet-ip>
+cd /opt/openclaw && bash deploy.sh
+```
+
+`deploy.sh` only does `git pull` + `docker compose up -d --build` — it does NOT sync `.env`.
+
+---
+
+## First-Time Setup (for users)
+
+### Prerequisites
+
+1. **doctl** — DigitalOcean CLI ([install guide](https://docs.digitalocean.com/reference/doctl/how-to/install/))
+2. **Docker** — only needed if running locally without a Droplet
+3. A set of API keys — see `.env.example` for the full list with instructions
+
+### Steps
+
+```bash
+git clone https://github.com/Rogue-Iteration/TheBigClaw.git
+cd TheBigClaw
+cp .env.example .env
+# Fill in .env — every key has instructions in the file
+
+# Validate your config
+bash install.sh --dry-run
+
+# Deploy to DigitalOcean (interactive — prompts for region + SSH key)
+bash install.sh
+
+# Or non-interactively:
+DROPLET_REGION=nyc3 DROPLET_SSH_KEY_IDS=12345 bash install.sh
+```
+
+After deployment, pair your Telegram — see `README.md` for the full walkthrough.
+
+### Running Locally (without DigitalOcean)
+
+```bash
+cp .env.example .env
+# Fill in .env
+docker compose up -d
+```
+
+---
+
+## Container Management
+
+```bash
+# SSH into the Droplet
+ssh root@<droplet-ip>
+
+# Tail logs
+docker logs -f openclaw-research
+
+# Restart
+docker compose restart
+
+# Stop
+docker compose down
+
+# Rebuild and start
+docker compose up -d --build
+```
+
+---
 
 ## Droplet Safety
 
@@ -76,6 +154,8 @@ docker compose up -d --build        # Rebuild and start
 >
 > Non-destructive reads (checking logs, status, listing files) are fine without asking.
 
+---
+
 ## Testing
 
 ### Approach
@@ -87,13 +167,15 @@ docker compose up -d --build        # Rebuild and start
 ### Running Tests
 
 ```bash
-cd /Users/simoneichenauer/Development/thebigclaw
+pip install -r requirements-dev.txt
 python3 -m pytest tests/ -v
 ```
 
 ### Test Fixtures
 
 Mock data and fixtures live in `tests/fixtures/`. Tests use `responses` for HTTP mocking and `moto` for S3/Spaces mocking.
+
+---
 
 ## Code Style & Documentation
 
@@ -110,18 +192,29 @@ All secrets live in `.env` (locally and on the Droplet). **Never commit real sec
 
 See `.env.example` for the full list with inline documentation.
 
+---
+
 ## Common Workflows
 
 ### Adding a new skill script
 
-1. Create `skills/gradient-research-assistant/<skill_name>.py` (or under an agent-specific dir)
+1. Create `skills/<skill-name>/scripts/<script_name>.py`
 2. Add inline documentation (module docstring + function docstrings)
-3. Write tests in `tests/test_<skill_name>.py` (TDD preferred)
-4. Run `python3 -m pytest tests/ -v` to verify
-5. Push to `main` → CI runs tests → deploy with `bash install.sh --update`
+3. Document the tool in the relevant SKILL.md
+4. If specific agents need it: add to their `IDENTITY.md` under Available Tools
+5. Write tests in `tests/test_<skill_name>.py` (TDD preferred)
+6. Run `python3 -m pytest tests/ -v` to verify
+7. Add the exec pattern to `docker-entrypoint.sh` allowlist (if new skill dir)
+8. Deploy: commit → push → `bash install.sh --update`
 
 ### Updating agent personas
 
 1. Edit the relevant files in `data/workspaces/<agent-name>/`
-2. Deploy: `bash install.sh --update` (or `deploy.sh` on the Droplet)
+2. Deploy: `bash install.sh --update`
 3. The Docker entrypoint syncs persona files on every container start
+
+### How the entrypoint works
+
+`docker-entrypoint.sh` runs on every container start and:
+- **First run only**: Generates `openclaw.json` (models, agents, Telegram config, exec allowlist)
+- **Every start**: Syncs persona files from `data/workspaces/` into agent workspaces, creates skill symlinks, initializes the SQLite database, seeds default schedules

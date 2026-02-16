@@ -7,7 +7,7 @@ description: >
 files: ["scripts/*"]
 homepage: https://github.com/Rogue-Iteration/TheBigClaw
 metadata:
-  openclaw:
+  clawdbot:
     emoji: "📚"
     primaryEnv: DO_API_TOKEN
     requires:
