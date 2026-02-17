@@ -22,7 +22,7 @@ sys.path.insert(0, str(SKILL_DIR))
 
 from gradient_kb_query import (
     query_kb,
-    build_rag_prompt,
+    build_rag_messages,
     query_with_rag,
     KB_RETRIEVE_BASE_URL,
     INFERENCE_URL,
@@ -140,24 +140,27 @@ class TestQueryKB:
         assert result["success"] is False
 
 
-class TestBuildRagPrompt:
+class TestBuildRagMessages:
     def test_includes_user_query(self):
-        prompt = build_rag_prompt("What about CAKE?", [])
-        assert "What about CAKE?" in prompt
+        messages = build_rag_messages("What about CAKE?", [])
+        user_msg = next(m for m in messages if m["role"] == "user")
+        assert "What about CAKE?" in user_msg["content"]
 
     def test_empty_results_mentions_no_data(self):
-        prompt = build_rag_prompt("test", [])
-        assert "no relevant" in prompt.lower() or "building up" in prompt.lower()
+        messages = build_rag_messages("test", [])
+        system_msg = next(m for m in messages if m["role"] == "system")
+        assert "no relevant" in system_msg["content"].lower() or "building up" in system_msg["content"].lower()
 
     def test_includes_kb_results(self):
         results = [
             {"content": "CAKE beat Q4 earnings", "metadata": {"source": "sec"}, "score": 0.95},
             {"content": "Reddit bullish on CAKE", "metadata": {"source": "reddit"}, "score": 0.82},
         ]
-        prompt = build_rag_prompt("Tell me about CAKE", results)
-        assert "beat Q4" in prompt
-        assert "bullish" in prompt
-        assert "0.95" in prompt
+        messages = build_rag_messages("Tell me about CAKE", results)
+        system_msg = next(m for m in messages if m["role"] == "system")
+        assert "beat Q4" in system_msg["content"]
+        assert "bullish" in system_msg["content"]
+        assert "0.95" in system_msg["content"]
 
 
 class TestQueryWithRag:
